@@ -5,7 +5,7 @@
     </div>
     <h1 class="title" v-html="title"></h1>
     <div class="bg-image" :style="bgStyle" ref="bgImage">
-      <div class="fliter"></div>
+      <div class="fliter" ref="fliter"></div>
     </div>
     <div class="bg-layer" ref="layer"></div>
     <scroll @scroll="scroll" :probe-type="probeType" :listen-scroll="listenScroll" :data="songs" class="list" ref="list">
@@ -65,8 +65,19 @@
       scrollY(newY) {
         let translateY = Math.max(this.minTranslateY, newY)
         let zIndex = 0
+        let scale = 1
+        let blur = 0
         this.$refs.layer.style['transform'] = `translate3d(0, ${translateY}PX, 0)`
         this.$refs.layer.style['webkitTransform'] = `translate(0, ${translateY},0)`
+        const percent = Math.abs(newY / this.imageHeight)
+        if (newY > 0) {
+          scale = 1 + percent
+          zIndex = 10
+        } else {
+          blur = Math.min(20 * percent, 20)
+        }
+        this.$refs.fliter.style['backdrop-fliter'] = `blur(${blur}px)`
+        this.$refs.fliter.style['webkitBackdrop-fliter'] = `blur(${blur}px)`
         if (newY < this.minTranslateY) {
           zIndex = 10
           this.$refs.bgImage.style.paddingTop = 0
@@ -76,6 +87,8 @@
           this.$refs.bgImage.style.height = 0
         }
         this.$refs.bgImage.style.zIndex = zIndex
+        this.$refs.bgImage.style['transform'] = `scale(${scale})`
+        this.$refs.bgImage.style['webkitTransform'] = `scale(${scale})`
       }
     },
     components: {
