@@ -1,16 +1,25 @@
 <template>
   <div class="music-list">
-    <div class="back">
+    <div class="back" @click="back">
       <div class="icon-back"></div>
     </div>
     <h1 class="title" v-html="title"></h1>
     <div class="bg-image" :style="bgStyle" ref="bgImage">
+      <div class="play-wrapper">
+        <div class="play" v-show="songs.length>0" ref="play">
+          <i class="icon-play"></i>
+          <span class="text">随机播放</span>
+        </div>
+      </div>
       <div class="fliter" ref="fliter"></div>
     </div>
     <div class="bg-layer" ref="layer"></div>
     <scroll @scroll="scroll" :probe-type="probeType" :listen-scroll="listenScroll" :data="songs" class="list" ref="list">
       <div class="song-list-wrapper">
         <song-list :songs="songs"></song-list>
+      </div>
+      <div class="loading-container" v-show="!songs.length">
+        <loading></loading>
       </div>
     </scroll>
   </div>
@@ -21,7 +30,12 @@
 <script type="text/ecmascript-6">
   import Scroll from 'base/scroll/scroll'
   import SongList from 'base/song-list/song-list'
+  import Loading from 'base/loading/loading'
+  import {prefixStyle} from 'common/js/dom'
+
   const RESERVED_HEIGHT = 40
+  const transform = prefixStyle('transform')
+  const backdrop = prefixStyle('backdrop-filter')
   export default {
     props: {
       bgImage: {
@@ -59,6 +73,9 @@
     methods: {
       scroll(pos) {
         this.scrollY = pos.y
+      },
+      back() {
+        this.$router.back()
       }
     },
     watch: {
@@ -67,8 +84,7 @@
         let zIndex = 0
         let scale = 1
         let blur = 0
-        this.$refs.layer.style['transform'] = `translate3d(0, ${translateY}PX, 0)`
-        this.$refs.layer.style['webkitTransform'] = `translate(0, ${translateY},0)`
+        this.$refs.layer.style[transform] = `translate3d(0, ${translateY}PX, 0)`
         const percent = Math.abs(newY / this.imageHeight)
         if (newY > 0) {
           scale = 1 + percent
@@ -76,24 +92,25 @@
         } else {
           blur = Math.min(20 * percent, 20)
         }
-        this.$refs.fliter.style['backdrop-fliter'] = `blur(${blur}px)`
-        this.$refs.fliter.style['webkitBackdrop-fliter'] = `blur(${blur}px)`
+        this.$refs.fliter.style[backdrop] = `blur(${blur}px)`
         if (newY < this.minTranslateY) {
           zIndex = 10
           this.$refs.bgImage.style.paddingTop = 0
           this.$refs.bgImage.style.height = `${RESERVED_HEIGHT}px`
+          this.$refs.play.style.display = 'none'
         } else {
           this.$refs.bgImage.style.paddingTop = '70%'
           this.$refs.bgImage.style.height = 0
+          this.$refs.play.style.display = ''
         }
         this.$refs.bgImage.style.zIndex = zIndex
-        this.$refs.bgImage.style['transform'] = `scale(${scale})`
-        this.$refs.bgImage.style['webkitTransform'] = `scale(${scale})`
+        this.$refs.bgImage.style[transform] = `scale(${scale})`
       }
     },
     components: {
       Scroll,
-      SongList
+      SongList,
+      Loading
     }
   }
 </script>
@@ -130,7 +147,7 @@
       text-align: center
       line-height: 40px
       font-size: $font-size-large
-      color: $color-text
+      color: $color-theme
     .bg-image
       position: relative
       width: 100%
