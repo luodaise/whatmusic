@@ -31,14 +31,14 @@
               <div class="icon i-left">
                 <i class="icon-sequence"></i>
               </div>
-              <div class="icon i-left">
-                <i class="icon-prev"></i>
+              <div class="icon i-left" :class="disableCls">
+                <i @click="prev" class="icon-prev"></i>
               </div>
-              <div class="icon i-center">
+              <div class="icon i-center" :class="disableCls">
                 <i @click="togglePlaying" :class="playIcon"></i>
               </div>
-              <div class="icon i-right">
-                <i class="icon-next"></i>
+              <div class="icon i-right" :class="disableCls">
+                <i @click="next" class="icon-next"></i>
               </div>
               <div class="icon i-right">
                 <i class="icon icon-not-favorite"></i>
@@ -50,7 +50,9 @@
       <transition name="mini">
         <div class="mini-player" v-show="!fullScreen" @click="open">
           <div class="icon">
-            <img width="40" height="40" :src="currentSong.image">
+            <div class="imgWrapper" ref="miniWrapper">
+               <img width="40" height="40" :src="currentSong.image" :class="cdCls">
+            </div>
           </div>
           <div class="text">
             <h2 class="name" v-html="currentSong.name"></h2>
@@ -64,7 +66,7 @@
           </div>
         </div>
       </transition>
-      <audio ref="audio" :src="currentSong.url"></audio>
+      <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error"></audio>
     </div>
 </template>
 
@@ -75,6 +77,11 @@
   const transform = prefixStyle
 
   export default {
+    data() {
+      return {
+        songReady: false
+      }
+    },
     computed: {
       cdCls() {
         return this.playing ? 'play' : 'pause'
@@ -85,11 +92,15 @@
       miniIcon() {
         return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
       },
+      disableCls() {
+        return this.songReady ? '' : 'disable'
+      },
       ...mapGetters([
         'fullScreen',
         'playlist',
         'currentSong',
-        'playing'
+        'playing',
+        'currentIndex'
       ])
     },
     methods: {
@@ -98,6 +109,40 @@
       },
       open() {
         this.setFullScreen(true)
+      },
+      next() {
+        if (!this.songReady) {
+          return
+        }
+        let index = this.currentIndex + 1
+        if (index === this.playlist.length) {
+          index = 0
+        }
+        this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.togglePlaying()
+        }
+        this.songReady = false
+      },
+      prev() {
+        if (!this.songReady) {
+          return
+        }
+        let index = this.currentIndex - 1
+        if (index === -1) {
+          index = this.playlist.length - 1
+        }
+        this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.togglePlaying()
+        }
+        this.songReady = false
+      },
+      ready() {
+        this.songReady = true
+      },
+      error() {
+        this.songReady = true
       },
       enter(el, done) {
         const {x, y, scale} = this._getPosAndScale()
@@ -156,7 +201,8 @@
       },
       ...mapMutations({
         setFullScreen: 'SET_FULL_SCREEN',
-        setPlayingState: 'SET_PLAYING_STATE'
+        setPlayingState: 'SET_PLAYING_STATE',
+        setCurrentIndex: 'SET_CURRENT_INDEX'
       })
     },
     watch: {
@@ -336,7 +382,7 @@
             flex: 1
             color: $color-theme
             &.disable
-              color: $color-theme-d
+              color: $color-theme
             i
               font-size: 30px
           .i-left
