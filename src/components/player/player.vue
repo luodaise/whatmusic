@@ -4,7 +4,7 @@
                   @enter="enter"
                   @after-enter="afterEnter"
                   @leave="leave"
-                  @after-leave="afterleave"
+                  @after-leave="afterLeave"
       >
         <div class="normal-player" v-show="fullScreen">
           <div class="background">
@@ -27,6 +27,13 @@
             </div>
           </div>
           <div class="bottom">
+            <div class="progress-wrapper">
+              <span class="time time-l">{{format(currentTime)}}</span>
+              <div class="progress-bar-wrapper">
+                <progress-bar :percent="percent" @percentChange="onProgressBarChange"></progress-bar>
+              </div>
+              <span class="time time-r">{{format(currentSong.duration)}}</span>
+            </div>
             <div class="operators">
               <div class="icon i-left">
                 <i class="icon-sequence"></i>
@@ -66,7 +73,7 @@
           </div>
         </div>
       </transition>
-      <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error"></audio>
+      <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime"></audio>
     </div>
 </template>
 
@@ -74,12 +81,14 @@
   import {mapGetters, mapMutations} from 'vuex'
   import animations from 'create-keyframe-animation'
   import {prefixStyle} from 'common/js/dom'
+  import progressBar from 'base/progress-bar/progress-bar'
   const transform = prefixStyle
 
   export default {
     data() {
       return {
-        songReady: false
+        songReady: false,
+        currentTime: 0
       }
     },
     computed: {
@@ -94,6 +103,9 @@
       },
       disableCls() {
         return this.songReady ? '' : 'disable'
+      },
+      percent() {
+        return this.currentTime / this.currentSong.duration
       },
       ...mapGetters([
         'fullScreen',
@@ -144,6 +156,29 @@
       error() {
         this.songReady = true
       },
+      updateTime(e) {
+        this.currentTime = e.target.currentTime
+      },
+      format(interval) {
+        interval = interval | 0
+        const minute = interval / 60 | 0
+        const second = this._pad(interval % 60)
+        return `${minute}:${second}`
+      },
+      onProgressBarChange(percent) {
+        this.$refs.audio.currentTime = this.currentSong.duration * percent
+        if (!this.playing) {
+          this.togglePlaying()
+        }
+      },
+      _pad(num, n = 2) {
+        let len = num.toString().length
+        while (len < n) {
+          num = '0' + num
+          len++
+        }
+        return num
+      },
       enter(el, done) {
         const {x, y, scale} = this._getPosAndScale()
         let animation = {
@@ -177,7 +212,7 @@
         this.$refs.cdWrapper.style[transform] = `translate3d(${x}px, ${y}px, 0) scale(${scale})`
         this.$refs.cdWrapper.addEventListener('transitionend', done)
       },
-      afterleave() {
+      afterLeave() {
         this.$refs.cdWrapper.style[transform] = ''
         this.$refs.cdWrapper.style.transition = ''
       },
@@ -217,6 +252,9 @@
           newPlaying ? audio.play() : audio.pause()
         })
       }
+    },
+    components: {
+      progressBar
     }
   }
 </script>
