@@ -20,8 +20,8 @@
           <div class="middle">
             <div class="middle-l">
               <div class="cd-wrapper" ref="cdWrapper">
-                <div class="cd" :class="cdCls">
-                  <img  class="image" :src="currentSong.image">
+                <div class="cd" >
+                  <img :class="cdCls" class="image" :src="currentSong.image">
                 </div>
               </div>
             </div>
@@ -77,7 +77,7 @@
   export default {
     computed: {
       cdCls() {
-        return this.playing ? ''
+        return this.playing ? 'play' : 'pause'
       },
       playIcon() {
         return this.playing ? 'icon-pause' : 'icon-play'
@@ -168,7 +168,7 @@
       playing(newPlaying) {
         const audio = this.$refs.audio
         this.$nextTick(() => {
-          newPlaying ? audio.paly() : audio.pause()
+          newPlaying ? audio.play() : audio.pause()
         })
       }
     }
