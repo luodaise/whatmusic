@@ -1,43 +1,45 @@
 <template>
   <div class="music-list">
     <div class="back" @click="back">
-      <div class="icon-back"></div>
+      <i class="icon-back"></i>
     </div>
     <h1 class="title" v-html="title"></h1>
     <div class="bg-image" :style="bgStyle" ref="bgImage">
       <div class="play-wrapper">
-        <div class="play" v-show="songs.length>0" ref="playBtn" @click="random">
+        <div ref="playBtn" v-show="songs.length>0" class="play" @click="random">
           <i class="icon-play"></i>
-          <span class="text">随机播放</span>
+          <span class="text">随机播放全部</span>
         </div>
       </div>
-      <div class="fliter" ref="fliter"></div>
+      <div class="filter" ref="filter"></div>
     </div>
     <div class="bg-layer" ref="layer"></div>
-    <scroll @scroll="scroll" :probe-type="probeType" :listen-scroll="listenScroll" :data="songs" class="list" ref="list">
+    <scroll :data="songs" @scroll="scroll"
+            :listen-scroll="listenScroll" :probe-type="probeType" class="list" ref="list">
       <div class="song-list-wrapper">
-        <song-list @select="selectItem" :songs="songs"></song-list>
+        <song-list :songs="songs" :rank="rank" @select="selectItem"></song-list>
       </div>
-      <div class="loading-container" v-show="!songs.length">
+      <div v-show="!songs.length" class="loading-container">
         <loading></loading>
       </div>
     </scroll>
   </div>
-
-
 </template>
 
 <script type="text/ecmascript-6">
   import Scroll from 'base/scroll/scroll'
-  import SongList from 'base/song-list/song-list'
   import Loading from 'base/loading/loading'
+  import SongList from 'base/song-list/song-list'
   import {prefixStyle} from 'common/js/dom'
+  import {playlistMixin} from 'common/js/mixin'
   import {mapActions} from 'vuex'
 
   const RESERVED_HEIGHT = 40
   const transform = prefixStyle('transform')
   const backdrop = prefixStyle('backdrop-filter')
+
   export default {
+    mixins: [playlistMixin],
     props: {
       bgImage: {
         type: String,
@@ -50,6 +52,10 @@
       title: {
         type: String,
         default: ''
+      },
+      rank: {
+        type: Boolean,
+        default: false
       }
     },
     data() {
@@ -68,10 +74,15 @@
     },
     mounted() {
       this.imageHeight = this.$refs.bgImage.clientHeight
-      this.minTranslateY = -this.imageHeight + RESERVED_HEIGHT
+      this.minTransalteY = -this.imageHeight + RESERVED_HEIGHT
       this.$refs.list.$el.style.top = `${this.imageHeight}px`
     },
     methods: {
+      handlePlaylist(playlist) {
+        const bottom = playlist.length > 0 ? '60px' : ''
+        this.$refs.list.$el.style.bottom = bottom
+        this.$refs.list.refresh()
+      },
       scroll(pos) {
         this.scrollY = pos.y
       },
@@ -126,8 +137,8 @@
     },
     components: {
       Scroll,
-      SongList,
-      Loading
+      Loading,
+      SongList
     }
   }
 </script>
@@ -164,7 +175,7 @@
       text-align: center
       line-height: 40px
       font-size: $font-size-large
-      color: $color-theme
+      color: $color-text
     .bg-image
       position: relative
       width: 100%
@@ -175,7 +186,7 @@
       .play-wrapper
         position: absolute
         bottom: 20px
-        z-index: 150
+        z-index: 50
         width: 100%
         .play
           box-sizing: border-box
@@ -208,7 +219,7 @@
       height: 100%
       background: $color-background
     .list
-      position: fixed
+      position: absolute
       top: 0
       bottom: 0
       width: 100%
