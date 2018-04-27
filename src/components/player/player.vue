@@ -349,7 +349,7 @@
         const {x, y, scale} = this._getPosAndScale()
         let animation = {
           0: {
-            transform: `translate3d(${x}px, ${y}px, 0) scale(${scale})`
+            transform: `translate3d(${x}px,${y}px,0) scale(${scale})`
           },
           60: {
             transform: `translate3d(0, 0, 0) scale(1.1)`
@@ -375,8 +375,12 @@
       leave(el, done) {
         this.$refs.cdWrapper.style.transition = 'all 0.4s'
         const {x, y, scale} = this._getPosAndScale()
-        this.$refs.cdWrapper.style[transform] = `translate3d(${x}px, ${y}px, 0) scale(${scale})`
-        this.$refs.cdWrapper.addEventListener('transitionend', done)
+        this.$refs.cdWrapper.style[transform] = `translate3d(${x}px,${y}px,0) scale(${scale})`
+        const timer = setTimeout(done, 400)
+        this.$refs.cdWrapper.addEventListener('transitionend', () => {
+          clearTimeout(timer)
+          done()
+        })
       },
       afterLeave() {
         this.$refs.cdWrapper.style[transform] = ''
