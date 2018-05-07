@@ -101,7 +101,7 @@ import {playlist} from "../../store/getters";
 </template>
 
 <script type="text/ecmascript-6">
-  import {mapGetters, mapMutations} from 'vuex'
+  import {mapGetters, mapMutations, mapActions} from 'vuex'
   import animations from 'create-keyframe-animation'
   import {prefixStyle} from 'common/js/dom'
   import progressBar from 'base/progress-bar/progress-bar'
@@ -205,6 +205,7 @@ import {playlist} from "../../store/getters";
       },
       ready() {
         this.songReady = true
+        this.savePlayHistory(this.currentSong)
       },
       end() {
         if (this.mode === playMode.loop) {
@@ -394,7 +395,10 @@ import {playlist} from "../../store/getters";
       },
       ...mapMutations({
         setFullScreen: 'SET_FULL_SCREEN'
-      })
+      }),
+      ...mapActions([
+        'savePlayHistory'
+      ])
     },
     watch: {
       currentSong(newSong, oldSong) {
