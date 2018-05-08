@@ -67,7 +67,7 @@ import {playlist} from "../../store/getters";
                 <i @click="next" class="icon-next"></i>
               </div>
               <div class="icon i-right">
-                <i class="icon icon-not-favorite"></i>
+                <i class="icon" @click="toggleFavorite(currentSong)" :class="getFavoriteIcon(currentSong)"></i>
               </div>
             </div>
           </div>
@@ -95,7 +95,7 @@ import {playlist} from "../../store/getters";
         </div>
       </transition>
       <playlist ref="playlist"></playlist>
-      <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime" @ended="end"></audio>
+      <audio ref="audio" :src="currentSong.url" @play="ready" @error="error" @timeupdate="updateTime" @ended="end"></audio>
     </div>
 
 </template>
@@ -217,6 +217,12 @@ import {playlist} from "../../store/getters";
       error() {
         this.songReady = true
       },
+      paused() {
+        this.setPlayingState(false)
+        if (this.currentLyric) {
+          this.currentLyric.stop()
+        }
+      },
       updateTime(e) {
         this.currentTime = e.target.currentTime
       },
@@ -280,13 +286,16 @@ import {playlist} from "../../store/getters";
         if (Math.abs(deltaY) > Math.abs(deltaX)) {
           return
         }
+        if (!this.touch.moved) {
+          this.touch.moved = true
+        }
         const left = this.currentShow === 'cd' ? 0 : -window.innerWidth
         const offsetWidth = Math.min(0, Math.max(-window.innerWidth, left + deltaX))
         this.touch.percent = Math.abs(offsetWidth / window.innerWidth)
-        this.$refs.lyricList.$el.style[transform] = `translate3d(${offsetWidth}px, 0, 0)`
+        this.$refs.lyricList.$el.style[transform] = `translate3d(${offsetWidth}px,0,0)`
         this.$refs.lyricList.$el.style[transitionDuration] = 0
         this.$refs.middleL.style.opacity = 1 - this.touch.percent
-        this.$refs.middleL.$el.style[transitionDuration] = 0
+        this.$refs.middleL.style[transitionDuration] = 0
       },
       middleTouchEnd() {
         let offsetWidth
@@ -410,8 +419,12 @@ import {playlist} from "../../store/getters";
         }
         if (this.currentLyric) {
           this.currentLyric.stop()
+          this.currentTime = 0
+          this.playingLyric = ''
+          this.currentLineNum = 0
         }
-        setTimeout(() => {
+        clearTimeout(this.timer)
+        this.timer = setTimeout(() => {
           this.$refs.audio.play()
           this.getLyric()
         }, 1000)
