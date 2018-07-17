@@ -122,7 +122,7 @@ import {playlist} from "../../store/getters";
         currentTime: 0,
         radius: 32,
         currentLyric: null,
-        currrentLineNum: 0,
+        currentLineNum: 0,
         currentShow: 'cd',
         playingLyric: ''
       }
